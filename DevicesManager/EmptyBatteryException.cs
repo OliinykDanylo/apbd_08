@@ -1,6 +1,6 @@
 namespace DevicesManager;
 
-public class EmptyBatteryException
+public class EmptyBatteryException : Exception
 {
-    
+    public EmptyBatteryException(string message) : base(message) { }
 }
