@@ -83,9 +83,9 @@ public class DeviceManager
         }
     }
 
-    public void EditDevice(int id, object newData)
+    public void EditDevice(string name, object newData)
     {
-        var device = _devices.FirstOrDefault(d => d.Id == id);
+        var device = _devices.FirstOrDefault(d => d.Name == name);
         if (device != null)
         {
             switch (device)

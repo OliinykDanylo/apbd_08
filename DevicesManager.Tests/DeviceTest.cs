@@ -58,7 +58,7 @@ public class DeviceTest
             var device = new Smartwatch(1, "Test Watch", false, 50);
             deviceManager.AddDevice(device);
             
-            deviceManager.EditDevice(1, 75);
+            deviceManager.EditDevice("Test Watch", 75);
             
             Assert.AreEqual(75, ((Smartwatch)deviceManager.GetDevices().First(d => d.Id == 1)).BatteryPercentage);
         }
