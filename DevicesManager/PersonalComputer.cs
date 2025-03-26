@@ -1,25 +1,35 @@
-namespace DevicesManager;
+using DevicesManager;
 
 public class PersonalComputer : Device
 {
-    public string OperatingSystem { get; set; }
-
-    public PersonalComputer(int id, string name, bool isDeviceTurnedOn, string operatingSystem) 
-        : base(id, name, isDeviceTurnedOn)
+    public string? OperatingSystem { get; set; }
+    
+    public PersonalComputer(string id, string name, bool isEnabled, string? operatingSystem) : base(id, name, isEnabled)
     {
+        if (!CheckId(id))
+        {
+            throw new ArgumentException("Invalid ID value. Required format: P-1", id);
+        }
+        
         OperatingSystem = operatingSystem;
     }
 
     public override void TurnOn()
     {
-        if(string.IsNullOrEmpty(OperatingSystem))
-            throw new EmptySystemException("Operating system is not set");
-        
+        if (OperatingSystem is null)
+        {
+            throw new EmptySystemException();
+        }
+
         base.TurnOn();
     }
-    
+
     public override string ToString()
     {
-        return $"{Name} - {(IsDeviceTurnedOn ? "on" : "off")} - OS: {OperatingSystem}";
+        string enabledStatus = IsEnabled ? "enabled" : "disabled";
+        string osStatus = OperatingSystem is null ? "has not OS" : $"has {OperatingSystem}";
+        return $"PC {Name} ({Id}) is {enabledStatus} and {osStatus}";
     }
+
+    private bool CheckId(string id) => id.Contains("P-");
 }

@@ -1,52 +1,67 @@
-namespace DevicesManager;
+using System.Text.RegularExpressions;
+using DevicesManager;
 
 public class EmbeddedDevice : Device
 {
+    public string NetworkName { get; set; }
     private string _ipAddress;
-    private string _networkName;
+    private bool _isConnected = false;
 
     public string IpAddress
     {
         get => _ipAddress;
         set
         {
-            if (!System.Text.RegularExpressions.Regex.IsMatch(value,
-                    @"^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"))
+            Regex ipRegex = new Regex("^((25[0-5]|(2[0-4]|1\\d|[1-9]|)\\d)\\.?\\b){4}$");
+            if (ipRegex.IsMatch(value))
             {
-                throw new ArgumentException("Invalid IP address format.");
+                _ipAddress = value;
             }
-            _ipAddress = value;
-        }
-    }
 
-    public string NetworkName
-    {
-        get => _networkName;
-        set => _networkName = value;
+            throw new ArgumentException("Wrong IP address format.");
+        }
     }
     
-    public EmbeddedDevice(int id, string name, bool isDeviceTurnedOn, string ipAddress, string networkName) : base(id, name, isDeviceTurnedOn)
+    public EmbeddedDevice(string id, string name, bool isEnabled, string ipAddress, string networkName) : base(id, name, isEnabled)
     {
+        if (CheckId(id))
+        {
+            throw new ArgumentException("Invalid ID value. Required format: E-1", id);
+        }
+
         IpAddress = ipAddress;
         NetworkName = networkName;
-    }
-
-    public void Connect()
-    {
-        if (!NetworkName.Contains("MD Ltd."))
-        {
-            throw new ConnectionException("Network Name does not contain MD Ltd.");
-        }
     }
 
     public override void TurnOn()
     {
         Connect();
         base.TurnOn();
-    } 
-    
+    }
+
+    public override void TurnOff()
+    {
+        _isConnected = false;
+        base.TurnOff();
+    }
+
     public override string ToString()
     {
-        return $"{Name} - {(IsDeviceTurnedOn ? "on" : "off")} - IP: {IpAddress} - Network: {NetworkName}";
+        string enabledStatus = IsEnabled ? "enabled" : "disabled";
+        return $"Embedded device {Name} ({Id}) is {enabledStatus} and has IP address {IpAddress}";
     }
+
+    private void Connect()
+    {
+        if (NetworkName.Contains("MD Ltd."))
+        {
+            _isConnected = true;
+        }
+        else
+        {
+            throw new ConnectionException();
+        }
+    }
+    
+    private bool CheckId(string id) => id.Contains("E-");
 }

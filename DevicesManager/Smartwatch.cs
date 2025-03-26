@@ -1,53 +1,67 @@
-namespace DevicesManager;
+using DevicesManager;
 
 public class Smartwatch : Device, IPowerNotifier
 {
-    private int _batteryPercentage;
+    private int _batteryLevel;
     
-    public int BatteryPercentage
+    public int getBatteryLevel()
     {
-        get => _batteryPercentage;
+        return _batteryLevel;
+    }
+
+    public int BatteryLevel
+    {
+        get => _batteryLevel;
         set
         {
-            if (value < 0 || value > 100) 
-                throw new ArgumentOutOfRangeException("Battery percentage must be between 0 and 100");
-            
-            _batteryPercentage = value;
-
-            if (_batteryPercentage < 20)
+            if (value < 0 || value > 100)
             {
-                NotifyLowBattery();
+                throw new ArgumentException("Invalid battery level value. Must be between 0 and 100.", nameof(value));
+            }
+            
+            _batteryLevel = value;
+            if (_batteryLevel < 20)
+            {
+                Notify();
             }
         }
     }
     
-    public Smartwatch(int id, string name, bool isDeviceTurnedOn, int batteryPercentage) 
-        : base(id, name, isDeviceTurnedOn)
+    public Smartwatch(string id, string name, bool isEnabled, int batteryLevel) : base(id, name, isEnabled)
     {
-        BatteryPercentage = batteryPercentage;
+        if (CheckId(id))
+        {
+            throw new ArgumentException("Invalid ID value. Required format: SW-1", id);
+        }
+        BatteryLevel = batteryLevel;
     }
 
-    public void NotifyLowBattery()
+    public void Notify()
     {
-        Console.WriteLine("Battery is low. Please charge your smartwatch.");
+        Console.WriteLine($"Battery level is low. Current level is: {BatteryLevel}");
     }
 
     public override void TurnOn()
     {
-        if (BatteryPercentage < 11)
-            throw new EmptyBatteryException("Battery is too low to turn on the smartwatch");
-        
+        if (BatteryLevel < 11)
+        {
+            throw new EmptyBatteryException();
+        }
+
         base.TurnOn();
-        BatteryPercentage -= 10;
+        BatteryLevel -= 10;
+
+        if (BatteryLevel < 20)
+        {
+            Notify();
+        }
     }
 
     public override string ToString()
     {
-        return $"{Name} - {(IsDeviceTurnedOn ? "on" : "off")} - Battery: {BatteryPercentage}%";
+        string enabledStatus = IsEnabled ? "enabled" : "disabled";
+        return $"Smartwatch {Name} ({Id}) is {enabledStatus} and has {BatteryLevel}%";
     }
-
-    public string getName()
-    {
-        return Name;
-    }
+    
+    private bool CheckId(string id) => id.Contains("E-");
 }

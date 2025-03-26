@@ -1,6 +1,6 @@
 namespace DevicesManager;
 
-public class EmptySystemException : Exception
+class EmptySystemException : Exception
 {
-    public EmptySystemException(string message)  : base(message){ }
+    public EmptySystemException() : base("Operation system is not installed.") { }
 }

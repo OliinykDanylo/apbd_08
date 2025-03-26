@@ -1,6 +1,6 @@
 namespace DevicesManager;
 
-public interface IPowerNotifier
+interface IPowerNotifier
 {
-    void NotifyLowBattery();
+    void Notify();
 }

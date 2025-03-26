@@ -1,6 +1,6 @@
 namespace DevicesManager;
 
-public class EmptyBatteryException : Exception
+class EmptyBatteryException : Exception
 {
-    public EmptyBatteryException(string message) : base(message) { }
+    public EmptyBatteryException() : base("Battery level is too low to turn it on.") { }
 }

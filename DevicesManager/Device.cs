@@ -1,32 +1,23 @@
-namespace DevicesManager;
-
 public abstract class Device
 {
-    public int Id { get; set; }
+    public string Id { get; set; }
     public string Name { get; set; }
-    public bool IsDeviceTurnedOn { get; set; }
+    public bool IsEnabled { get; set; }
 
-    protected Device() {}
-
-    public Device(int id, string name, bool isDeviceTurnedOn)
+    public Device(string id, string name, bool isEnabled)
     {
         Id = id;
         Name = name;
-        IsDeviceTurnedOn = isDeviceTurnedOn;
+        IsEnabled = isEnabled;
     }
-    
+
     public virtual void TurnOn()
     {
-        if(IsDeviceTurnedOn) throw new Exception("Device is already turned on");
-        IsDeviceTurnedOn = true;
+        IsEnabled = true;
     }
 
-    public void TurnOff()
+    public virtual void TurnOff()
     {
-        if (!IsDeviceTurnedOn) throw new Exception("Device is already turned off");
-        IsDeviceTurnedOn = false;
+        IsEnabled = false;
     }
-
-    public abstract override string ToString();
-
 }

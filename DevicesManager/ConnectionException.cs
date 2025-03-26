@@ -1,6 +1,6 @@
 namespace DevicesManager;
 
-public class ConnectionException : Exception
+class ConnectionException : Exception
 {
-    public ConnectionException(string message) : base(message) { }
+    public ConnectionException() : base("Wrong netowrk name.") { }
 }
