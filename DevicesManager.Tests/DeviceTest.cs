@@ -6,6 +6,11 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace DevicesManager.Tests;
 
+/// <summary>
+/// Unit tests for the <see cref="Device"/> class.
+/// Tests various methods in the <see cref="DeviceManager"/> class, including adding, removing,
+/// editing devices, turning them on and off, showing all devices, and saving data to a file.
+/// </summary>
 [TestClass]
 [TestSubject(typeof(Device))]
 public class DeviceTest
@@ -19,6 +24,9 @@ public class DeviceTest
     
     private const string TestFilePath = "/Users/danylooliinyk/programming/uni/apbd/DevicesManager/DevicesManager.Tests/test.txt";
 
+        /// <summary>
+        /// Tests if a device can be added to the device manager when the storage is not full.
+        /// </summary>
         [TestMethod]
         public void AddDevice_ShouldAddDevice_WhenStorageIsNotFull()
         {
@@ -29,6 +37,10 @@ public class DeviceTest
             Assert.Contains(device, deviceManager.GetDevices());
         }
         
+        /// <summary>
+        /// Tests that a device cannot be added when the storage is full.
+        /// An exception should be thrown indicating the storage is full.
+        /// </summary>
         [TestMethod]
         public void AddDevice_ShouldNotAddDevice_WhenStorageIsFull()
         {
@@ -53,6 +65,9 @@ public class DeviceTest
             Assert.AreEqual("Device storage is full.", exception.Message);
         }
 
+        /// <summary>
+        /// Tests that a device can be removed from the device manager when it exists.
+        /// </summary>
         [TestMethod]
         public void RemoveDevice_ShouldRemoveDevice_WhenDeviceExists()
         {
@@ -64,6 +79,9 @@ public class DeviceTest
             Assert.DoesNotContain(device, deviceManager.GetDevices());
         }
 
+        /// <summary>
+        /// Tests that a device can be edited in the device manager when it exists.
+        /// </summary>
         [TestMethod]
         public void EditDevice_ShouldEditDevice_WhenDeviceExists()
         {
@@ -75,6 +93,9 @@ public class DeviceTest
             Assert.AreEqual(75, ((Smartwatch)deviceManager.GetDevices().First(d => d.Id == "1")).getBatteryLevel());
         }
 
+        /// <summary>
+        /// Tests that a device can be turned on when it exists in the device manager.
+        /// </summary>
         [TestMethod]
         public void TurnOnDevice_ShouldTurnOnDevice_WhenDeviceExists()
         {
@@ -86,6 +107,9 @@ public class DeviceTest
             Assert.IsTrue(deviceManager.GetDevices().First(d => d.Id == "1").IsEnabled);
         }
 
+        /// <summary>
+        /// Tests that a device can be turned off when it exists in the device manager.
+        /// </summary>
         [TestMethod]
         public void TurnOffDevice_ShouldTurnOffDevice_WhenDeviceExists()
         {
@@ -97,6 +121,9 @@ public class DeviceTest
             Assert.IsFalse(deviceManager.GetDevices().First(d => d.Id == "1").IsEnabled);
         }
 
+        /// <summary>
+        /// Tests that all devices are correctly shown in the device manager.
+        /// </summary>
         [TestMethod]
         public void ShowAllDevices_ShouldShowAllDevices()
         {
@@ -111,6 +138,9 @@ public class DeviceTest
             Assert.Contains(device2, devices);
         }
 
+        /// <summary>
+        /// Tests that the device manager correctly saves data to a file.
+        /// </summary>
         [TestMethod]
         public void SaveDataToFile_ShouldSaveDataToFile()
         {

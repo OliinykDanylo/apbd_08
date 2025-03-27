@@ -1,9 +1,6 @@
 ﻿using DevicesManager;
 
-//I have tested all the functionality in Tests section)
 
-// class Program
-// {
     static void Main()
     {
         try
