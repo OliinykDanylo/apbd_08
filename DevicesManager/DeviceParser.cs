@@ -1,79 +1,56 @@
+using System;
+
 namespace DevicesManager;
 
-class DeviceParser
+public class DeviceParser : IDeviceParser
 {
-    // Because we should have basic info + at least one additional info
-    private const int MinimumRequiredElements = 4;
-
-    private const int IndexPosition = 0;
-    private const int DeviceNamePosition = 1;
-    private const int EnabledStatusPosition = 2;
-    
-    public PersonalComputer ParsePC(string line, int lineNumber)
+    public Device Parse(string line, int lineNumber)
     {
-        const int SystemPosition = 3;
-        
-        var infoSplits = line.Split(',');
-
-        if (infoSplits.Length < MinimumRequiredElements)
+        if (line.StartsWith("P-"))
         {
-            throw new ArgumentException($"Corrupted line {lineNumber}", line);
+            return ParsePC(line, lineNumber);
         }
-        
-        if (bool.TryParse(infoSplits[EnabledStatusPosition], out bool _) is false)
+        else if (line.StartsWith("SW-"))
         {
-            throw new ArgumentException($"Corrupted line {lineNumber}: can't parse enabled status for computer.", line);
+            return ParseSmartwatch(line, lineNumber);
         }
-        
-        return new PersonalComputer(infoSplits[IndexPosition], infoSplits[DeviceNamePosition], 
-            bool.Parse(infoSplits[EnabledStatusPosition]), infoSplits[SystemPosition]);
+        else if (line.StartsWith("ED-"))
+        {
+            return ParseEmbedded(line, lineNumber);
+        }
+        else
+        {
+            throw new ArgumentException($"Line {lineNumber} is corrupted.");
+        }
     }
 
-    public Smartwatch ParseSmartwatch(string line, int lineNumber)
+    private Device ParsePC(string line, int lineNumber)
     {
-        const int BatteryPosition = 3;
-        
-        var infoSplits = line.Split(',');
-
-        if (infoSplits.Length < MinimumRequiredElements)
+        var parts = line.Split(',');
+        if (parts.Length != 4)
         {
-            throw new ArgumentException($"Corrupted line {lineNumber}", line);
+            throw new ArgumentException($"Line {lineNumber} is corrupted.");
         }
-        
-        if (bool.TryParse(infoSplits[EnabledStatusPosition], out bool _) is false)
-        {
-            throw new ArgumentException($"Corrupted line {lineNumber}: can't parse enabled status for smartwatch.", line);
-        }
-
-        if (int.TryParse(infoSplits[BatteryPosition].Replace("%", ""), out int _) is false)
-        {
-            throw new ArgumentException($"Corrupted line {lineNumber}: can't parse battery level for smartwatch.", line);
-        }
-
-        return new Smartwatch(infoSplits[IndexPosition], infoSplits[DeviceNamePosition], 
-            bool.Parse(infoSplits[EnabledStatusPosition]), int.Parse(infoSplits[BatteryPosition].Replace("%", "")));
+        return new PersonalComputer(parts[0], parts[1], bool.Parse(parts[2]), parts[3]);
     }
 
-    public EmbeddedDevice ParseEmbedded(string line, int lineNumber)
+    private Device ParseSmartwatch(string line, int lineNumber)
     {
-        const int IpAddressPosition = 3;
-        const int NetworkNamePosition = 4;
-        
-        var infoSplits = line.Split(',');
-
-        if (infoSplits.Length < MinimumRequiredElements + 1)
+        var parts = line.Split(',');
+        if (parts.Length != 4)
         {
-            throw new ArgumentException($"Corrupted line {lineNumber}", line);
+            throw new ArgumentException($"Line {lineNumber} is corrupted.");
         }
-        
-        if (bool.TryParse(infoSplits[EnabledStatusPosition], out bool _) is false)
-        {
-            throw new ArgumentException($"Corrupted line {lineNumber}: can't parse enabled status for embedded device.", line);
-        }
-
-        return new EmbeddedDevice(infoSplits[IndexPosition], infoSplits[DeviceNamePosition], 
-            bool.Parse(infoSplits[EnabledStatusPosition]), infoSplits[IpAddressPosition], 
-            infoSplits[NetworkNamePosition]);
+        return new Smartwatch(parts[0], parts[1], bool.Parse(parts[2]), int.Parse(parts[3].TrimEnd('%')));
     }
-    
+
+    private Device ParseEmbedded(string line, int lineNumber)
+    {
+        var parts = line.Split(',');
+        if (parts.Length != 5)
+        {
+            throw new ArgumentException($"Line {lineNumber} is corrupted.");
+        }
+        return new EmbeddedDevice(parts[0], parts[1], bool.Parse(parts[2]), parts[3], parts[4]);
+    }
 }

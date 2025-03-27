@@ -10,13 +10,18 @@ namespace DevicesManager.Tests;
 [TestSubject(typeof(Device))]
 public class DeviceTest
 {
+    private readonly DeviceManager deviceManager;
+
+    public DeviceTest()
+    {
+        deviceManager = DeviceManagerFactory.CreateDeviceManager();
+    }
     
     private const string TestFilePath = "/Users/danylooliinyk/programming/uni/apbd/DevicesManager/DevicesManager.Tests/test.txt";
 
         [TestMethod]
         public void AddDevice_ShouldAddDevice_WhenStorageIsNotFull()
         {
-            var deviceManager = new DeviceManager(TestFilePath);
             var device = new Smartwatch("1", "Test Watch", false, 50);
             
             deviceManager.AddDevice(device);
@@ -27,13 +32,12 @@ public class DeviceTest
         [TestMethod]
         public void AddDevice_ShouldNotAddDevice_WhenStorageIsFull()
         {
-            var deviceManager = new DeviceManager(TestFilePath);
             
             deviceManager.ClearAllDevices();
 
             try
             {
-                for (int i = 0; i < deviceManager.getMaxCapacity(); i++) 
+                for (int i = 0; i < deviceManager.GetMaxCapacity(); i++) 
                 {
                     deviceManager.AddDevice(new Smartwatch(i.ToString(), $"Test Watch {i}", false, 50));
                 }
@@ -52,7 +56,6 @@ public class DeviceTest
         [TestMethod]
         public void RemoveDevice_ShouldRemoveDevice_WhenDeviceExists()
         {
-            var deviceManager = new DeviceManager(TestFilePath);
             var device = new Smartwatch("1", "Test Watch", false, 50);
             deviceManager.AddDevice(device);
             
@@ -64,7 +67,6 @@ public class DeviceTest
         [TestMethod]
         public void EditDevice_ShouldEditDevice_WhenDeviceExists()
         {
-            var deviceManager = new DeviceManager(TestFilePath);
             var device = new Smartwatch("1", "Test Watch", false, 50);
             deviceManager.AddDevice(device);
             
@@ -76,7 +78,6 @@ public class DeviceTest
         [TestMethod]
         public void TurnOnDevice_ShouldTurnOnDevice_WhenDeviceExists()
         {
-            var deviceManager = new DeviceManager(TestFilePath);
             var device = new Smartwatch("1", "Test Watch", false, 50);
             deviceManager.AddDevice(device);
             
@@ -88,7 +89,6 @@ public class DeviceTest
         [TestMethod]
         public void TurnOffDevice_ShouldTurnOffDevice_WhenDeviceExists()
         {
-            var deviceManager = new DeviceManager(TestFilePath);
             var device = new Smartwatch("1", "Test Watch", true, 50);
             deviceManager.AddDevice(device);
             
@@ -100,7 +100,6 @@ public class DeviceTest
         [TestMethod]
         public void ShowAllDevices_ShouldShowAllDevices()
         {
-            var deviceManager = new DeviceManager(TestFilePath);
             var device1 = new Smartwatch("1", "Test Watch 1", false, 50);
             var device2 = new Smartwatch("2", "Test Watch 2", false, 60);
             deviceManager.AddDevice(device1);
@@ -115,7 +114,6 @@ public class DeviceTest
         [TestMethod]
         public void SaveDataToFile_ShouldSaveDataToFile()
         {
-            var deviceManager = new DeviceManager(TestFilePath);
             var device = new Smartwatch("SW-1", "Apple Watch SE2" ,true,27);
             deviceManager.AddDevice(device);
             var saveFilePath = "/Users/danylooliinyk/programming/uni/apbd/DevicesManager/DevicesManager.Tests/test.txt";
@@ -127,6 +125,6 @@ public class DeviceTest
             {
                 Console.WriteLine(line);
             }
-            Assert.IsTrue(savedLines.Contains("SW-1,Apple Watch SE2,True,27%"));
+            Assert.IsTrue(savedLines.Contains("SW-1,Apple Watch SE2,True,27"));
         }
 }

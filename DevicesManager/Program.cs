@@ -1,9 +1,5 @@
 ﻿using DevicesManager;
 
-DeviceManager dm = new DeviceManager("/Users/danylooliinyk/programming/uni/apbd/DevicesManager/DevicesManager/input.txt");
-
-dm.ShowAllDevices();
-
 //I have tested all the functionality in Tests section)
 
 // class Program
@@ -12,10 +8,10 @@ dm.ShowAllDevices();
     {
         try
         {
-            DeviceManager deviceManager = new("input.txt");
+            DeviceManager deviceManager = DeviceManagerFactory.CreateDeviceManager();
             
             Console.WriteLine("Devices presented after file read.");
-            deviceManager.ShowAllDevices();
+            deviceManager.GetDevices();
             
             Console.WriteLine("Create new computer with correct data and add it to device store.");
             {
@@ -48,11 +44,10 @@ dm.ShowAllDevices();
             deviceManager.RemoveDeviceById("P-2");
             
             Console.WriteLine("Devices presented after all operations.");
-            deviceManager.ShowAllDevices();
+            Console.WriteLine(deviceManager.GetDevices());
         }
         catch (Exception ex)
         {
             Console.WriteLine(ex.Message);
         }
     }
-// }
