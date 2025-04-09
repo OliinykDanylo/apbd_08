@@ -18,7 +18,7 @@ public class EmbeddedController : ControllerBase
         new EmbeddedDevice
         {
             Id = 2,
-            Name = "Device2",
+            Name = "EmbeddedDevice2",
             ipAdress = "192.198.2.1",
             isConnected = false,
             NetworkName = "Network2"
