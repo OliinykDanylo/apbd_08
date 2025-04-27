@@ -13,16 +13,68 @@ public class DeviceService<T> : IDeviceService<T> where T : Device, new()
         _connectionString = connectionString;
     }
     
+    // public void Post(Device device)
+    // {
+    //     if (device == null)
+    //     {
+    //         throw new ArgumentNullException(nameof(device), "Device cannot be null.");
+    //     }
+    //
+    //     if (string.IsNullOrEmpty(device.Id))
+    //     {
+    //         throw new ArgumentException("Device Id cannot be null or empty.");
+    //     }
+    //
+    //     if (string.IsNullOrEmpty(device.Name))
+    //     {
+    //         throw new ArgumentException("Device Name cannot be null or empty.");
+    //     }
+    //
+    //     using var connection = new SqlConnection(_connectionString);
+    //     connection.Open();
+    //
+    //     // Insert into Device table
+    //     string query = "INSERT INTO Device (Id, Name, IsEnabled) VALUES (@Id, @Name, @IsEnabled)";
+    //     using (var command = new SqlCommand(query, connection))
+    //     {
+    //         command.Parameters.AddWithValue("@Id", device.Id);
+    //         command.Parameters.AddWithValue("@Name", device.Name);
+    //         command.Parameters.AddWithValue("@IsEnabled", device.IsEnabled);
+    //         command.ExecuteNonQuery();
+    //     }
+    //
+    //     // Insert into specific table
+    //     if (device is SmartWatch smartwatch)
+    //     {
+    //         query = "INSERT INTO Smartwatch (BatteryPercentage, DeviceId) VALUES (@BatteryPercentage, @DeviceId)";
+    //         using var command = new SqlCommand(query, connection);
+    //         command.Parameters.AddWithValue("@BatteryPercentage", smartwatch.BatteryLevel);
+    //         command.Parameters.AddWithValue("@DeviceId", smartwatch.Id);
+    //         command.ExecuteNonQuery();
+    //     }
+    //     else if (device is PersonalComputer pc)
+    //     {
+    //         query = "INSERT INTO PersonalComputer (OperationSystem, DeviceId) VALUES (@OperationSystem, @DeviceId)";
+    //         using var command = new SqlCommand(query, connection);
+    //         command.Parameters.AddWithValue("@DeviceId", pc.Id);
+    //         command.Parameters.AddWithValue("@OperationSystem", pc.OperatingSystem);
+    //         command.ExecuteNonQuery();
+    //     }
+    //     else if (device is EmbeddedDevice embedded)
+    //     {
+    //         query = "INSERT INTO Embedded (IpAddress, NetworkName, DeviceId) VALUES (@IpAddress, @NetworkName, @DeviceId)";
+    //         using var command = new SqlCommand(query, connection);
+    //         command.Parameters.AddWithValue("@DeviceId", embedded.Id);
+    //         command.Parameters.AddWithValue("@IpAddress", embedded.IpAddress);
+    //         command.Parameters.AddWithValue("@NetworkName", embedded.NetworkName);
+    //         command.ExecuteNonQuery();
+    //     }
+    // }
     public void Post(Device device)
     {
         if (device == null)
         {
             throw new ArgumentNullException(nameof(device), "Device cannot be null.");
-        }
-
-        if (string.IsNullOrEmpty(device.Id))
-        {
-            throw new ArgumentException("Device Id cannot be null or empty.");
         }
 
         if (string.IsNullOrEmpty(device.Name))
@@ -32,8 +84,7 @@ public class DeviceService<T> : IDeviceService<T> where T : Device, new()
 
         using var connection = new SqlConnection(_connectionString);
         connection.Open();
-
-        // Insert into Device table
+        
         string query = "INSERT INTO Device (Id, Name, IsEnabled) VALUES (@Id, @Name, @IsEnabled)";
         using (var command = new SqlCommand(query, connection))
         {
@@ -42,8 +93,7 @@ public class DeviceService<T> : IDeviceService<T> where T : Device, new()
             command.Parameters.AddWithValue("@IsEnabled", device.IsEnabled);
             command.ExecuteNonQuery();
         }
-
-        // Insert into specific table
+        
         if (device is SmartWatch smartwatch)
         {
             query = "INSERT INTO Smartwatch (BatteryPercentage, DeviceId) VALUES (@BatteryPercentage, @DeviceId)";
@@ -269,6 +319,37 @@ public class DeviceService<T> : IDeviceService<T> where T : Device, new()
         {
             deleteDeviceCommand.Parameters.AddWithValue("@Id", id);
             return deleteDeviceCommand.ExecuteNonQuery() > 0;
+        }
+    }
+    
+    public string GenerateDeviceId(string type)
+    {
+        // Determine the prefix based on device type
+        string prefix = type.ToUpper() switch
+        {
+            "SW" => "SW-",
+            "P" => "P-",
+            "E" => "E-",
+            _ => throw new ArgumentException("Invalid device type")
+        };
+
+        // Query the database to find the current highest ID
+        string query = $"SELECT MAX(CAST(SUBSTRING(Id, LEN('{prefix}') + 1, LEN(Id)) AS INT)) FROM Device WHERE Id LIKE '{prefix}%'";
+
+        using (var connection = new SqlConnection(_connectionString))
+        {
+            connection.Open();
+            using (var command = new SqlCommand(query, connection))
+            {
+                // Get the highest number from the existing device IDs
+                var result = command.ExecuteScalar();
+
+                // Default to 0 if no existing ID is found
+                int maxId = result != DBNull.Value ? Convert.ToInt32(result) : 0;
+
+                // Generate the next ID by incrementing the maximum ID
+                return $"{prefix}{maxId + 1}";
+            }
         }
     }
 }
