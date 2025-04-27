@@ -235,8 +235,7 @@ public class DeviceService<T> : IDeviceService<T> where T : Device, new()
 
         using var connection = new SqlConnection(_connectionString);
         connection.Open();
-
-        // Update Device table
+        
         var query = "UPDATE Device SET Name = @Name, IsEnabled = @IsEnabled WHERE Id = @Id";
         using (var command = new SqlCommand(query, connection))
         {
@@ -245,8 +244,7 @@ public class DeviceService<T> : IDeviceService<T> where T : Device, new()
             command.Parameters.AddWithValue("@IsEnabled", device.IsEnabled);
             command.ExecuteNonQuery();
         }
-
-        // Update specific table
+        
         if (device is SmartWatch smartwatch)
         {
             query = "UPDATE Smartwatch SET BatteryPercentage = @BatteryPercentage WHERE DeviceId = @DeviceId";
@@ -324,7 +322,6 @@ public class DeviceService<T> : IDeviceService<T> where T : Device, new()
     
     public string GenerateDeviceId(string type)
     {
-        // Determine the prefix based on device type
         string prefix = type.ToUpper() switch
         {
             "SW" => "SW-",
@@ -332,8 +329,7 @@ public class DeviceService<T> : IDeviceService<T> where T : Device, new()
             "E" => "E-",
             _ => throw new ArgumentException("Invalid device type")
         };
-
-        // Query the database to find the current highest ID
+        
         string query = $"SELECT MAX(CAST(SUBSTRING(Id, LEN('{prefix}') + 1, LEN(Id)) AS INT)) FROM Device WHERE Id LIKE '{prefix}%'";
 
         using (var connection = new SqlConnection(_connectionString))
@@ -341,13 +337,10 @@ public class DeviceService<T> : IDeviceService<T> where T : Device, new()
             connection.Open();
             using (var command = new SqlCommand(query, connection))
             {
-                // Get the highest number from the existing device IDs
                 var result = command.ExecuteScalar();
-
-                // Default to 0 if no existing ID is found
+                
                 int maxId = result != DBNull.Value ? Convert.ToInt32(result) : 0;
-
-                // Generate the next ID by incrementing the maximum ID
+                
                 return $"{prefix}{maxId + 1}";
             }
         }
