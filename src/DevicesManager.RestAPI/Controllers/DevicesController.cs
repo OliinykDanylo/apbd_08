@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using DevicesManager.Logic;
 using Microsoft.AspNetCore.Mvc;
 
@@ -40,51 +41,51 @@ public class DevicesController : ControllerBase
             : Results.Ok(device);
     }
     
-[HttpPost("{type}")]
-public IResult PostDevice([FromBody] JsonElement body)
-{
-    try
+    [HttpPost("{type}")]
+    public IResult PostDevice([FromBody] JsonElement body)
     {
-        string jsonString = body.GetRawText();
-
-        using var document = JsonDocument.Parse(jsonString);
-        var root = document.RootElement;
-
-        string id = root.GetProperty("Id").GetString() ?? throw new ArgumentException("Device Id is required");
-
-        Device device;
-        if (id.StartsWith("SW-"))
+        try
         {
-            device = JsonSerializer.Deserialize<SmartWatch>(jsonString)!;
-        }
-        else if (id.StartsWith("P-"))
-        {
-            device = JsonSerializer.Deserialize<PersonalComputer>(jsonString)!;
-        }
-        else if (id.StartsWith("E-"))
-        {
-            device = JsonSerializer.Deserialize<EmbeddedDevice>(jsonString)!;
-        }
-        else
-        {
-            throw new ArgumentException("Unknown device type.");
-        }
+            string jsonString = body.GetRawText();
 
-        ValidateDevice(device);
+            using var document = JsonDocument.Parse(jsonString);
+            var root = document.RootElement;
 
-        _deviceManager.Post(device);
+            string id = root.GetProperty("Id").GetString() ?? throw new ArgumentException("Device Id is required");
 
-        return Results.Created($"/api/devices/{device.Id}", device);
+            Device device;
+            if (id.StartsWith("SW-"))
+            {
+                device = JsonSerializer.Deserialize<SmartWatch>(jsonString)!;
+            }
+            else if (id.StartsWith("P-"))
+            {
+                device = JsonSerializer.Deserialize<PersonalComputer>(jsonString)!;
+            }
+            else if (id.StartsWith("E-"))
+            {
+                device = JsonSerializer.Deserialize<EmbeddedDevice>(jsonString)!;
+            }
+            else
+            {
+                throw new ArgumentException("Unknown device type.");
+            }
+
+            ValidateDevice(device);
+
+            _deviceManager.Post(device);
+
+            return Results.Created($"/api/devices/{device.Id}", device);
+        }
+        catch (ArgumentException ex)
+        {
+            return Results.BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem(ex.Message);
+        }
     }
-    catch (ArgumentException ex)
-    {
-        return Results.BadRequest(ex.Message);
-    }
-    catch (Exception ex)
-    {
-        return Results.Problem(ex.Message);
-    }
-}
 
     private void ValidateDevice(Device device)
     {
@@ -127,7 +128,8 @@ public IResult PostDevice([FromBody] JsonElement body)
 
     private bool IsValidIpAddress(string ipAddress)
     {
-        return System.Net.IPAddress.TryParse(ipAddress, out _);
+        Regex ipRegex = new Regex("^((25[0-5]|(2[0-4]|1\\d|[1-9]|)\\d)\\.?\\b){4}$");
+        return ipRegex.IsMatch(ipAddress);
     }
 
     [HttpPut("{id}")]

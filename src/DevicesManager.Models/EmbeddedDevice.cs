@@ -28,7 +28,11 @@ public class EmbeddedDevice : Device
             }
         }
     }
-    
+
+    public EmbeddedDevice()
+    {
+    }
+
     public EmbeddedDevice(string id, string name, bool isEnabled, string ipAddress, string networkName) 
         : base(id, name, isEnabled)
     {
