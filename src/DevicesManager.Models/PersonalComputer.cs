@@ -17,12 +17,17 @@ using DevicesManager;
         
         public override void TurnOn()
         {
-            if (OperatingSystem is null)
+            if (!CanBeTurnedOn())
             {
-                throw new EmptySystemException();
+                throw new ArgumentException("PC cannot be turned on.");
             }
 
             base.TurnOn();
+        }
+        
+        public bool CanBeTurnedOn()
+        {
+            return !string.IsNullOrEmpty(OperatingSystem);
         }
 
         public override string ToString()

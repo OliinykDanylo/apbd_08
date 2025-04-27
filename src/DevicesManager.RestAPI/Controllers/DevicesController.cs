@@ -40,48 +40,94 @@ public class DevicesController : ControllerBase
             : Results.Ok(device);
     }
     
-    [HttpPost("{type}")]
-    public IResult PostDevice([FromBody] JsonElement body)
+[HttpPost("{type}")]
+public IResult PostDevice([FromBody] JsonElement body)
+{
+    try
     {
-        try
+        string jsonString = body.GetRawText();
+
+        using var document = JsonDocument.Parse(jsonString);
+        var root = document.RootElement;
+
+        string id = root.GetProperty("Id").GetString() ?? throw new ArgumentException("Device Id is required");
+
+        Device device;
+        if (id.StartsWith("SW-"))
         {
-            string jsonString = body.GetRawText();
-
-            using var document = JsonDocument.Parse(jsonString);
-            var root = document.RootElement;
-
-            string id = root.GetProperty("Id").GetString() ?? throw new ArgumentException("Device Id is required");
-
-            Device device;
-            if (id.StartsWith("SW-"))
-            {
-                device = JsonSerializer.Deserialize<SmartWatch>(jsonString)!;
-            }
-            else if (id.StartsWith("P-"))
-            {
-                device = JsonSerializer.Deserialize<PersonalComputer>(jsonString)!;
-            }
-            else if (id.StartsWith("E-"))
-            {
-                device = JsonSerializer.Deserialize<EmbeddedDevice>(jsonString)!;
-            }
-            else
-            {
-                throw new ArgumentException("Unknown device type.");
-            }
-
-            _deviceManager.Post(device);
-
-            return Results.Created($"/api/devices/{device.Id}", device);
+            device = JsonSerializer.Deserialize<SmartWatch>(jsonString)!;
         }
-        catch (ArgumentException ex)
+        else if (id.StartsWith("P-"))
         {
-            return Results.BadRequest(ex.Message);
+            device = JsonSerializer.Deserialize<PersonalComputer>(jsonString)!;
         }
-        catch (Exception ex)
+        else if (id.StartsWith("E-"))
         {
-            return Results.Problem(ex.Message);
+            device = JsonSerializer.Deserialize<EmbeddedDevice>(jsonString)!;
         }
+        else
+        {
+            throw new ArgumentException("Unknown device type.");
+        }
+
+        ValidateDevice(device);
+
+        _deviceManager.Post(device);
+
+        return Results.Created($"/api/devices/{device.Id}", device);
+    }
+    catch (ArgumentException ex)
+    {
+        return Results.BadRequest(ex.Message);
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem(ex.Message);
+    }
+}
+
+    private void ValidateDevice(Device device)
+    {
+        if (device == null)
+        {
+            throw new ArgumentException("Device cannot be null.");
+        }
+
+        switch (device)
+        {
+            case SmartWatch smartwatch:
+                if (smartwatch.BatteryLevel < 0 || smartwatch.BatteryLevel > 100)
+                {
+                    throw new ArgumentException("Battery percentage must be between 0 and 100.");
+                }
+                break;
+
+            case PersonalComputer pc:
+                if (!pc.CanBeTurnedOn())
+                {
+                    throw new ArgumentException("PC cannot be turned on.");
+                }
+                break;
+
+            case EmbeddedDevice embedded:
+                if (string.IsNullOrWhiteSpace(embedded.IpAddress) || !IsValidIpAddress(embedded.IpAddress))
+                {
+                    throw new ArgumentException("Invalid IP address format.");
+                }
+                if (string.IsNullOrWhiteSpace(embedded.NetworkName))
+                {
+                    throw new ArgumentException("Network name cannot be empty.");
+                }
+                break;
+
+            default:
+                throw new ArgumentException("Unsupported device type.");
+        }
+    }
+
+    private bool IsValidIpAddress(string ipAddress)
+    {
+        return System.Net.IPAddress.TryParse(ipAddress, out _);
     }
 
     [HttpPut("{id}")]
