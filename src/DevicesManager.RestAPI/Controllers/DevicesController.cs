@@ -1,8 +1,8 @@
+using System.Data;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using DevicesManager.Logic;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.SqlClient;
 
 namespace DevicesManager.RestAPI.Controllers;
 
@@ -42,51 +42,6 @@ public class DevicesController : ControllerBase
             : Results.Ok(device);
     }
     
-    // [HttpPost("{type}")]
-    // public IResult PostDevice([FromBody] JsonElement body)
-    // {
-    //     try
-    //     {
-    //         string jsonString = body.GetRawText();
-    //
-    //         using var document = JsonDocument.Parse(jsonString);
-    //         var root = document.RootElement;
-    //
-    //         string id = root.GetProperty("Id").GetString() ?? throw new ArgumentException("Device Id is required");
-    //
-    //         Device device;
-    //         if (id.StartsWith("SW-"))
-    //         {
-    //             device = JsonSerializer.Deserialize<SmartWatch>(jsonString)!;
-    //         }
-    //         else if (id.StartsWith("P-"))
-    //         {
-    //             device = JsonSerializer.Deserialize<PersonalComputer>(jsonString)!;
-    //         }
-    //         else if (id.StartsWith("E-"))
-    //         {
-    //             device = JsonSerializer.Deserialize<EmbeddedDevice>(jsonString)!;
-    //         }
-    //         else
-    //         {
-    //             throw new ArgumentException("Unknown device type.");
-    //         }
-    //
-    //         ValidateDevice(device);
-    //
-    //         _deviceManager.Post(device);
-    //
-    //         return Results.Created($"/api/devices/{device.Id}", device);
-    //     }
-    //     catch (ArgumentException ex)
-    //     {
-    //         return Results.BadRequest(ex.Message);
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         return Results.Problem(ex.Message);
-    //     }
-    // }
     [HttpPost("{type}")]
     public IResult PostDevice(string type, [FromBody] JsonElement body)
     {
@@ -138,8 +93,7 @@ public class DevicesController : ControllerBase
                 default:
                     return Results.BadRequest($"Unsupported device type: {type}");
             }
-
-            // Generate ID
+            
             device.Id = _deviceManager.GenerateDeviceId(type);
 
             ValidateDevice(device);
@@ -212,54 +166,130 @@ public class DevicesController : ControllerBase
     {
         try
         {
-            string jsonString = body.GetRawText();
+            if (body.ValueKind != JsonValueKind.String)
+            {
+                return Results.BadRequest("Request body must be a newline-delimited string.");
+            }
 
-            using var document = JsonDocument.Parse(jsonString);
-            var root = document.RootElement;
+            string textBody = body.GetString() ?? throw new ArgumentException("Body is empty.");
+            var lines = textBody.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-            string deviceId = root.GetProperty("Id").GetString() ?? throw new ArgumentException("Device Id is required");
+            if (lines.Length < 5)
+            {
+                return Results.BadRequest("Insufficient fields in body (expected at least 5).");
+            }
 
-            if (deviceId != id)
+            string inputId = lines[0];
+            if (inputId != id)
             {
                 return Results.BadRequest("Device Id in URL does not match Id in body.");
             }
 
+            byte[] rowVersion;
+            try
+            {
+                string hexRowVersion = lines[^1];
+                if (hexRowVersion.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+                {
+                    hexRowVersion = hexRowVersion.Substring(2);
+                }
+                
+                rowVersion = ConvertHexToByteArray(hexRowVersion);
+            }
+            catch (FormatException)
+            {
+                return Results.BadRequest("Invalid RowVersion format. Expected hexadecimal (0x prefix) or Base64.");
+            }
+
             Device device;
-            if (deviceId.StartsWith("SW-"))
+
+            if (inputId.StartsWith("SW-"))
             {
-                device = JsonSerializer.Deserialize<SmartWatch>(jsonString)!;
+                if (lines.Length < 5)
+                    return Results.BadRequest("Missing SmartWatch fields.");
+
+                device = new SmartWatch
+                {
+                    Id = inputId,
+                    Name = lines[1],
+                    IsEnabled = bool.Parse(lines[2]),
+                    BatteryLevel = int.Parse(lines[3]),
+                    RowVersion = rowVersion
+                };
             }
-            else if (deviceId.StartsWith("P-"))
+            else if (inputId.StartsWith("P-"))
             {
-                device = JsonSerializer.Deserialize<PersonalComputer>(jsonString)!;
+                if (lines.Length < 5)
+                    return Results.BadRequest("Missing PersonalComputer fields.");
+
+                device = new PersonalComputer
+                {
+                    Id = inputId,
+                    Name = lines[1],
+                    IsEnabled = bool.Parse(lines[2]),
+                    OperatingSystem = lines[3],
+                    RowVersion = rowVersion
+                };
             }
-            else if (deviceId.StartsWith("E-"))
+            else if (inputId.StartsWith("E-"))
             {
-                device = JsonSerializer.Deserialize<EmbeddedDevice>(jsonString)!;
+                if (lines.Length < 6)
+                    return Results.BadRequest("Missing EmbeddedDevice fields.");
+
+                device = new EmbeddedDevice
+                {
+                    Id = inputId,
+                    Name = lines[1],
+                    IsEnabled = bool.Parse(lines[2]),
+                    IpAddress = lines[3],
+                    NetworkName = lines[4],
+                    RowVersion = rowVersion
+                };
             }
             else
             {
-                throw new ArgumentException("Unknown device type.");
+                return Results.BadRequest("Unknown device type.");
             }
 
             _deviceManager.EditDevice(device);
 
             return Results.Ok(device);
         }
+        catch (FormatException ex)
+        {
+            return Results.BadRequest($"Invalid format: {ex.Message}");
+        }
         catch (ArgumentException ex)
         {
             return Results.BadRequest(ex.Message);
+        }
+        catch (DBConcurrencyException)
+        {
+            return Results.Conflict("The device was updated by another user. Please reload and try again.");
         }
         catch (Exception ex)
         {
             return Results.Problem(ex.Message);
         }
     }
+    
+    private byte[] ConvertHexToByteArray(string hex)
+    {
+        if (hex.Length % 2 != 0)
+            throw new ArgumentException("Hex string must have an even length.");
+
+        byte[] byteArray = new byte[hex.Length / 2];
+        for (int i = 0; i < hex.Length; i += 2)
+        {
+            byteArray[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
+        }
+        return byteArray;
+    }
 
     [HttpDelete("{id}")]
-    public IResult DeleteDevice(string id, string deviceType)
+    public IResult DeleteDevice(string id)
     {
-        bool success = _deviceManager.DeleteDevice(id, deviceType);
+        bool success = _deviceManager.DeleteDevice(id);
         return success
             ? Results.NoContent()
             : Results.NotFound($"Device with ID '{id}' not found.");

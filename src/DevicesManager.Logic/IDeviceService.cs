@@ -6,6 +6,6 @@ public interface IDeviceService<T> where T : Device
     List<T> GetAllDevices();
     Device GetDeviceById(string id);
     bool EditDevice(Device device);
-    bool DeleteDevice(string id, string deviceType);
+    bool DeleteDevice(string id);
     string GenerateDeviceId(string type);
 }

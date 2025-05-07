@@ -8,6 +8,9 @@ public class Device
     
     public bool IsEnabled { get; set; }
     
+    // RowVersion for concurrency
+    public byte[] RowVersion { get; set; }
+    
     public Device() { }
     
     public Device(string id, string name, bool isEnabled)

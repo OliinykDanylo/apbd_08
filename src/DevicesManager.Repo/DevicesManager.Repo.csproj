@@ -9,7 +9,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\DevicesManager.Models\DevicesManager.Models.csproj" />
-      <ProjectReference Include="..\DevicesManager.Repo\DevicesManager.Repo.csproj" />
     </ItemGroup>
 
 </Project>

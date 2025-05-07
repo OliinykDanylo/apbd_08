@@ -3,20 +3,30 @@ using DevicesManager.Logic;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddSingleton<IDeviceService<Device>>(service =>
+// to register IDeviceRepository<Device>
+builder.Services.AddSingleton<IDeviceRepository<Device>>(service =>
 {
     var connectionString = builder.Configuration.GetConnectionString("MyDatabase");
     if (string.IsNullOrEmpty(connectionString))
     {
-        throw new InvalidOperationException("Connection string 'UniversityDatabase' is not configured.");
+        throw new InvalidOperationException("Connection string 'MyDatabase' is not configured.");
     }
-    return new DeviceService<Device>(connectionString);
+
+    return new DeviceRepository<Device>(connectionString);
 });
 
-builder.Services.AddScoped(typeof(DeviceService<>));
+// to register IDeviceService<Device>
+builder.Services.AddSingleton<IDeviceService<Device>>(service =>
+{
+    var repository = service.GetRequiredService<IDeviceRepository<Device>>();
+    return new DeviceService<Device>(repository);
+});
+
+// to register open generics (for flexibility, if needed)
+builder.Services.AddScoped(typeof(IDeviceRepository<>), typeof(DeviceRepository<>));
+builder.Services.AddScoped(typeof(IDeviceService<>), typeof(DeviceService<>));
 
 builder.Services.AddControllers();
-
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
