@@ -115,6 +115,57 @@ public class DeviceRepository<T> : IDeviceRepository<T> where T : Device, new()
         return null;
     }
 
+    // public void Add(T device)
+    // {
+    //     using var connection = new SqlConnection(_connectionString);
+    //     connection.Open();
+    //     using var transaction = connection.BeginTransaction();
+    //
+    //     try
+    //     {
+    //         using (var command = new SqlCommand("AddDevice", connection, transaction))
+    //         {
+    //             command.CommandType = CommandType.StoredProcedure;
+    //             command.Parameters.AddWithValue("@Id", device.Id);
+    //             command.Parameters.AddWithValue("@Name", device.Name);
+    //             command.Parameters.AddWithValue("@IsEnabled", device.IsEnabled);
+    //             command.ExecuteNonQuery();
+    //         }
+    //
+    //         if (device is SmartWatch sw)
+    //         {
+    //             using var command = new SqlCommand("AddSmartWatch", connection, transaction);
+    //             command.CommandType = CommandType.StoredProcedure;
+    //             command.Parameters.AddWithValue("@Id", sw.Id);
+    //             command.Parameters.AddWithValue("@BatteryPercentage", sw.BatteryLevel);
+    //             command.ExecuteNonQuery();
+    //         }
+    //         else if (device is PersonalComputer pc)
+    //         {
+    //             using var command = new SqlCommand("AddPersonalComputer", connection, transaction);
+    //             command.CommandType = CommandType.StoredProcedure;
+    //             command.Parameters.AddWithValue("@Id", pc.Id);
+    //             command.Parameters.AddWithValue("@OperationSystem", (object?)pc.OperatingSystem ?? DBNull.Value);
+    //             command.ExecuteNonQuery();
+    //         }
+    //         else if (device is EmbeddedDevice ed)
+    //         {
+    //             using var command = new SqlCommand("AddEmbeddedDevice", connection, transaction);
+    //             command.CommandType = CommandType.StoredProcedure;
+    //             command.Parameters.AddWithValue("@Id", ed.Id);
+    //             command.Parameters.AddWithValue("@IpAddress", ed.IpAddress);
+    //             command.Parameters.AddWithValue("@NetworkName", ed.NetworkName);
+    //             command.ExecuteNonQuery();
+    //         }
+    //
+    //         transaction.Commit();
+    //     }
+    //     catch
+    //     {
+    //         transaction.Rollback();
+    //         throw;
+    //     }
+    // }
     public void Add(T device)
     {
         using var connection = new SqlConnection(_connectionString);
@@ -123,39 +174,46 @@ public class DeviceRepository<T> : IDeviceRepository<T> where T : Device, new()
 
         try
         {
-            using (var command = new SqlCommand("AddDevice", connection, transaction))
-            {
-                command.CommandType = CommandType.StoredProcedure;
-                command.Parameters.AddWithValue("@Id", device.Id);
-                command.Parameters.AddWithValue("@Name", device.Name);
-                command.Parameters.AddWithValue("@IsEnabled", device.IsEnabled);
-                command.ExecuteNonQuery();
-            }
-
             if (device is SmartWatch sw)
             {
-                using var command = new SqlCommand("AddSmartWatch", connection, transaction);
-                command.CommandType = CommandType.StoredProcedure;
-                command.Parameters.AddWithValue("@Id", sw.Id);
+                using var command = new SqlCommand("AddSmartwatch", connection, transaction)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
+                command.Parameters.AddWithValue("@DeviceId", sw.Id);
+                command.Parameters.AddWithValue("@Name", sw.Name);
+                command.Parameters.AddWithValue("@IsEnabled", sw.IsEnabled);
                 command.Parameters.AddWithValue("@BatteryPercentage", sw.BatteryLevel);
                 command.ExecuteNonQuery();
             }
             else if (device is PersonalComputer pc)
             {
-                using var command = new SqlCommand("AddPersonalComputer", connection, transaction);
-                command.CommandType = CommandType.StoredProcedure;
-                command.Parameters.AddWithValue("@Id", pc.Id);
+                using var command = new SqlCommand("AddPersonalComputer", connection, transaction)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
+                command.Parameters.AddWithValue("@DeviceId", pc.Id);
+                command.Parameters.AddWithValue("@Name", pc.Name);
+                command.Parameters.AddWithValue("@IsEnabled", pc.IsEnabled);
                 command.Parameters.AddWithValue("@OperationSystem", (object?)pc.OperatingSystem ?? DBNull.Value);
                 command.ExecuteNonQuery();
             }
             else if (device is EmbeddedDevice ed)
             {
-                using var command = new SqlCommand("AddEmbeddedDevice", connection, transaction);
-                command.CommandType = CommandType.StoredProcedure;
-                command.Parameters.AddWithValue("@Id", ed.Id);
+                using var command = new SqlCommand("AddEmbedded", connection, transaction)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
+                command.Parameters.AddWithValue("@DeviceId", ed.Id);
+                command.Parameters.AddWithValue("@Name", ed.Name);
+                command.Parameters.AddWithValue("@IsEnabled", ed.IsEnabled);
                 command.Parameters.AddWithValue("@IpAddress", ed.IpAddress);
                 command.Parameters.AddWithValue("@NetworkName", ed.NetworkName);
                 command.ExecuteNonQuery();
+            }
+            else
+            {
+                throw new InvalidOperationException("Unsupported device type.");
             }
 
             transaction.Commit();
