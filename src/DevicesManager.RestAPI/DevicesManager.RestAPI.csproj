@@ -12,8 +12,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\DevicesManager.Logic\DevicesManager.Logic.csproj" />
-      <ProjectReference Include="..\DevicesManager.Models\DevicesManager.Models.csproj" />
+      <ProjectReference Include="..\DevicesManager.LogicLibrary\DevicesManager.LogicLibrary.csproj" />
+      <ProjectReference Include="..\DevicesManager.Repository\DevicesManager.Repository.csproj" />
     </ItemGroup>
 
 </Project>
